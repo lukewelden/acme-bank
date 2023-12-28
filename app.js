@@ -149,15 +149,21 @@ app.post("/download", function (request, response) {
   if (request.session.loggedin) {
     var file_name = request.body.file;
 
+    // Prevented Path Traversal Exploit Here
+    var rootDir = "history_files" + path.sep; 
+    const filename = path.join(process.cwd() + "/history_files/", file_name);
+    
     response.statusCode = 200;
     response.setHeader("Content-Type", "text/html");
 
-    // Change the filePath to current working directory using the "path" method
-    const filePath = "history_files/" + file_name;
-    console.log(filePath);
+    console.log(filename);
     try {
-      content = fs.readFileSync(filePath, "utf8");
-      response.end(content);
+      if (filename.indexOf(rootDir) < 0) {
+        response.end("file not found");
+      } else {
+        content = fs.readFileSync(filename, "utf8");
+        response.end(content);
+      }
     } catch (err) {
       console.log(err);
       response.end("File not found");
@@ -207,6 +213,7 @@ app.post(
       } else {
         db.all(
           `INSERT INTO public_forum (username,message) VALUES ($username,$comment)`,
+          // Protected from SQL Injection using prepared statements
           {
             $username: username,
             $comment: comment
@@ -236,6 +243,7 @@ app.get("/public_ledger", function (request, response) {
     if (id) {
       db.all(
         `SELECT * FROM public_ledger WHERE from_account = $id`,
+        // Protected from SQL Injection using prepared statements
         {
           $id: id
         },
