@@ -232,7 +232,7 @@ app.post(
 //SQL UNION INJECTION
 app.get("/public_ledger", function (request, response) {
   if (request.session.loggedin) {
-    var id = request.query.id;
+    var id = parseInt(request.query.id);
     if (id) {
       db.all(
         `SELECT * FROM public_ledger WHERE from_account = $id`,
