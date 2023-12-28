@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "author": "Luke Welden",
   "scripts": {
-    "start": "node app.js",
-    "dev": "nodemon app.js"
+    "start": "NODE_ENV=production node app.js",
+    "dev": "NODE_ENV=development app.js"
   },
   "dependencies": {
     "body-parser": "^1.19.0",

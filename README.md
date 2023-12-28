@@ -19,3 +19,9 @@ In this off-platform project, you will secure the application by:
 - Preventing Cross-Site Request Forgery (CSRF) attacks by implementing csurf middleware and updating certain view pages to secure any cross-site request vulnerabilities.
 
 > NOTE: To see the starter code be sure to checkout the starter-code branch! 
+
+## Actions 
+- [x] Required helmet to secure http headers
+- [x] Secured cookies by adding configuration to the session object
+- [x] Sanitised and validated user input on the public forum 
+- 

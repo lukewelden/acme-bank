@@ -4,6 +4,10 @@ const session = require("express-session");
 const path = require("path");
 const fs = require("fs");
 const morgan = require("morgan");
+// Requiring helmet to set security headers
+const helmet = require("helmet");
+// Requiring express-validator to validate user input
+const validator = require("express-validator");
 
 const db = new sqlite3.Database("./bank_sample.db");
 
@@ -13,12 +17,19 @@ app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
 
 app.use(morgan("dev"));
+app.use(helmet());
 
 app.use(
   session({
     secret: "secret",
     resave: true,
     saveUninitialized: true,
+    // Securing cookies
+    cookie: {
+      maxAge: 30000, // 30 seconds
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production' // true if in production, false otherwise
+    },
   })
 );
 
@@ -37,9 +48,8 @@ app.post("/auth", function (request, response) {
     db.get(
       `SELECT * FROM users WHERE username = '${request.body.username}' AND password = '${request.body.password}'`,
       function (error, results) {
-        console.log(error);
-        console.log(results);
         if (results) {
+          console.log(results);
           request.session.loggedin = true;
           request.session.username = results["username"];
           request.session.balance = results["balance"];
@@ -47,6 +57,7 @@ app.post("/auth", function (request, response) {
           request.session.account_no = results["account_no"];
           response.redirect("/home");
         } else {
+          console.log(error)
           response.send("Incorrect Username and/or Password!");
         }
         response.end();
@@ -65,6 +76,7 @@ app.get("/home", function (request, response) {
     balance = request.session.balance;
     response.render("home_page", { username, balance });
   } else {
+    console.log("Session.loggedin not set to true");
     response.redirect("/");
   }
   response.end();
@@ -167,7 +179,8 @@ app.get("/public_forum", function (request, response) {
 
 app.post("/public_forum", function (request, response) {
   if (request.session.loggedin) {
-    var comment = request.body.comment;
+    // validating the user comment input using express-validator
+    var comment = validator.escape(request.body.comment);
     var username = request.session.username;
     if (comment) {
       db.all(
