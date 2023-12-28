@@ -206,7 +206,11 @@ app.post(
         });
       } else {
         db.all(
-          `INSERT INTO public_forum (username,message) VALUES ('${username}','${comment}')`,
+          `INSERT INTO public_forum (username,message) VALUES ($username,$comment)`,
+          {
+            $username: username,
+            $comment: comment
+          },
           (err, rows) => {
             console.log(err);
           }
