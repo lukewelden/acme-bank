@@ -7,7 +7,7 @@ const morgan = require("morgan");
 // Requiring helmet to set security headers
 const helmet = require("helmet");
 // Requiring express-validator to validate user input
-const validator = require("express-validator");
+const { body, validationResult } = require("express-validator");
 
 const db = new sqlite3.Database("./bank_sample.db");
 
@@ -26,7 +26,7 @@ app.use(
     saveUninitialized: true,
     // Securing cookies
     cookie: {
-      maxAge: 30000, // 30 seconds
+      maxAge:  1000 * 60 * 5, // 5 minutes 
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production' // true if in production, false otherwise
     },
@@ -177,34 +177,45 @@ app.get("/public_forum", function (request, response) {
   //response.end();
 });
 
-app.post("/public_forum", function (request, response) {
-  if (request.session.loggedin) {
+app.post(
+  "/public_forum", 
+  [
     // validating the user comment input using express-validator
-    var comment = validator.escape(request.body.comment);
-    var username = request.session.username;
-    if (comment) {
-      db.all(
-        `INSERT INTO public_forum (username,message) VALUES ('${username}','${comment}')`,
-        (err, rows) => {
+    body("comment")
+    .trim()
+    .escape()
+    .isLength({ min: 1 })
+    .withMessage("Comment cannot be empty")
+  ],
+  function (request, response) {
+    if (request.session.loggedin) {
+      const errors = validationResult(request);
+      var comment = request.body.comment;
+      var username = request.session.username;
+      if (!errors.isEmpty()) {
+        console.log(errors);
+        db.all(`SELECT username,message FROM public_forum`, (err, rows) => {
+          console.log(rows);
           console.log(err);
-        }
-      );
-      db.all(`SELECT username,message FROM public_forum`, (err, rows) => {
-        console.log(rows);
-        console.log(err);
-        response.render("forum", { rows });
-      });
+          response.render("forum", { rows });
+        });
+      } else {
+        db.all(
+          `INSERT INTO public_forum (username,message) VALUES ('${username}','${comment}')`,
+          (err, rows) => {
+            console.log(err);
+          }
+        );
+        db.all(`SELECT username,message FROM public_forum`, (err, rows) => {
+          console.log(rows);
+          console.log(err);
+          response.render("forum", { rows });
+        });
+      }
+      comment = "";
     } else {
-      db.all(`SELECT username,message FROM public_forum`, (err, rows) => {
-        console.log(rows);
-        console.log(err);
-        response.render("forum", { rows });
-      });
+      response.redirect("/");
     }
-    comment = "";
-  } else {
-    response.redirect("/");
-  }
   comment = "";
   //response.end();
 });
