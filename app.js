@@ -3,6 +3,7 @@ const express = require("express");
 const session = require("express-session");
 const path = require("path");
 const fs = require("fs");
+const morgan = require("morgan");
 
 const db = new sqlite3.Database("./bank_sample.db");
 
@@ -10,6 +11,8 @@ const app = express();
 const PORT = 3000;
 app.set("view engine", "ejs");
 app.use(express.static(path.join(__dirname, "public")));
+
+app.use(morgan("dev"));
 
 app.use(
   session({
