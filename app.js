@@ -46,7 +46,12 @@ app.post("/auth", function (request, response) {
   var password = request.body.password;
   if (username && password) {
     db.get(
-      `SELECT * FROM users WHERE username = '${request.body.username}' AND password = '${request.body.password}'`,
+      `SELECT * FROM users WHERE username = $username AND password = $password`,
+      {
+        //SQL INJECTION PROTECTED
+        $username: username,
+        $password: password
+      },
       function (error, results) {
         if (results) {
           console.log(results);
